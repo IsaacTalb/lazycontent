@@ -1,40 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# 🦆 LazyContent | AI-Powered Blog to Social Media Tool
 
-## Getting Started
+![LazyContent UI](https://lazycontent.vercel.app) <!-- Optional: Add screenshot -->
 
-First, run the development server:
+LazyContent is a personal AI-powered tool designed to **convert any blog post URL** into **engaging social media content** using **Google Gemini API**, and automatically **save the results to Notion**.
+
+---
+
+## 🚀 Features
+
+- ✨ One-click transformation of blog URLs to social content
+- 📱 Auto-generate captions, tags, hashtags for:
+  - Facebook
+  - LinkedIn
+  - Threads (X)
+  - YouTube
+  - Instagram
+- 🎥 60-second social media Reel script
+- 🧠 Built using Next.js, Tailwind CSS, and Gemini AI
+- 🗂️ Data saved directly to your Notion database
+
+---
+
+## 🔧 Installation
+
+### 1. Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/lazycontent.git
+cd lazycontent
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependencies
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+```bash
+npm install # or yarn install
+```
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+### 3. Configure Environment Variables
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+Create a `.env.local` file at the root of your project:
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+GEMINI_API_KEY=your_gemini_api_key
+NOTION_DATABASE_ID=your_notion_database_id
+NOTION_TOKEN=your_notion_integration_token
+```
 
-## Learn More
+💡 You must share access of the Notion database with your integration token from Notion Developers.
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Run the Development Server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+```bash
+npm run dev # or yarn dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Visit: [http://localhost:3000](http://localhost:3000)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🧪 Example Use Case
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+Paste any blog post URL, click “Process Content”, and LazyContent will auto-generate social content and save it into your Notion workspace.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions to improve LazyContent! Here's how:
+
+- 🍴 Fork this repo
+- 🌱 Create a new branch: `git checkout -b feature/awesome`
+- ✅ Commit your changes: `git commit -m 'Add cool feature'`
+- 📤 Push to your fork: `git push origin feature/awesome`
+- 🛠️ Open a Pull Request
+
+---
+
+## 📌 Project Goals
+
+I built this as a personal productivity tool to help clients and creators automate repetitive content workflows. This is also part of a broader system called:
+
+- 📝 Duck Note by Duck Cloud – a future web app that allows you to:
+  - 🎙️ Talk → Transcribe in English, Myanmar, Khmer
+  - 🧠 Smart feedback & suggestions via AI
+  - 📥 Save everything neatly into Notion
+  - 💡 Advanced recommendation and loopback system
+
