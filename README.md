@@ -1,7 +1,5 @@
 # 🦆 LazyContent | AI-Powered Blog to Social Media Tool
 
-![LazyContent UI](https://lazycontent.vercel.app) <!-- Optional: Add screenshot -->
-
 LazyContent is a personal AI-powered tool designed to **convert any blog post URL** into **engaging social media content** using **Google Gemini API**, and automatically **save the results to Notion**.
 
 ---
@@ -26,7 +24,7 @@ LazyContent is a personal AI-powered tool designed to **convert any blog post UR
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/lazycontent.git
+git clone https://github.com/IsaacTalb/lazycontent.git
 cd lazycontent
 ```
 
