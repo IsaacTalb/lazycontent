@@ -1,12 +1,35 @@
 import axios from 'axios';
-import notion from '../../lib/notion';
+import { Client } from '@notionhq/client';
+
+// Get environment variables
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Only POST allowed');
 
-  const { url } = req.body;
+  const { 
+    content,
+    notionToken, 
+    notionDatabaseId,
+    geminiModel = 'gemini-2.0-flash' // Default model
+  } = req.body;
 
-  const blogText = await fetch(url).then(r => r.text());
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+
+  // Initialize Notion client
+  const notionClient = new Client({ auth: notionToken });
+
+  // If content is a URL, fetch it first
+  let blogText = content;
+  try {
+    if (content.startsWith('http')) {
+      const response = await fetch(content);
+      blogText = await response.text();
+    }
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    return res.status(500).json({ error: 'Failed to fetch content' });
+  }
 
   const geminiPrompt = `
 You're a social media content strategist AI.
@@ -55,72 +78,83 @@ Respond in this JSON format:
 ${blogText}
 `;
 
-  const geminiResponse = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      contents: [{ parts: [{ text: geminiPrompt }] }],
-    }
-  );
-
-  const rawOutput = geminiResponse.data.candidates[0].content.parts[0].text;
-
-  console.log('[Gemini Raw Output]', rawOutput);
-
-  // Strip ```json ``` and ``` if wrapped
-  const cleanOutput = rawOutput.replace(/```json|```/g, '').trim();
-
-  let sections;
   try {
-    sections = JSON.parse(cleanOutput);
-  } catch (err) {
-    console.error('❌ Failed to parse Gemini JSON output:', err.message);
-    return res.status(500).json({ error: 'Gemini output parsing failed' });
-  }
-
-  // Create the Notion page with mapped properties
-  await notion.pages.create({
-    parent: { database_id: process.env.NOTION_DATABASE_ID },
-    properties: {
-      Name: { title: [{ text: { content: sections.Title || 'Untitled' } }] },
-      URL: { url },
-      Title: { rich_text: [{ text: { content: sections.Title || '' } }] },
-      Summary: { rich_text: [{ text: { content: sections.Summary || '' } }] },
-      Facebook: {
-        rich_text: [{ text: { content: sections.Facebook?.Caption || '' } }],
-      },
-      LinkedIn: {
-        rich_text: [{ text: { content: sections.LinkedIn?.Caption || '' } }],
-      },
-      Threads: {
-        rich_text: [{ text: { content: sections.Threads?.Caption || '' } }],
-      },
-      YouTube: {
-        rich_text: [{ text: { content: sections.YouTube?.Description || '' } }],
-      },
-      Instagram: {
-        rich_text: [{ text: { content: sections.Instagram?.Caption || '' } }],
-      },
-      ReelScript: {
-        rich_text: [{ text: { content: sections['ReelScript'] || '' } }],
-      },
-    },
-    children: [
+    console.log('Making Gemini API request with API key:', GEMINI_API_KEY.substring(0, 10) + '...');
+    console.log('Using model:', geminiModel);
+    
+    const geminiResponse = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`,
       {
-        object: 'block',
-        type: 'paragraph',
-        paragraph: {
-          rich_text: [
-            {
-              type: 'text',
-              text: {
-                content: JSON.stringify(sections, null, 2).slice(0, 2000), // Preview in block
-              },
-            },
-          ],
+        contents: [{ parts: [{ text: geminiPrompt }] }]
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    console.log('Gemini API Response:', geminiResponse.data);
+    
+    // Extract the response content from Gemini
+    const responseContent = geminiResponse.data.candidates[0].content.parts[0].text;
+    
+    // Try to parse the JSON response
+    const sections = JSON.parse(responseContent.replace(/```json|```/g, '').trim());
+    
+    // Create Notion page
+    await notionClient.pages.create({
+      parent: { database_id: notionDatabaseId },
+      properties: {
+        Name: { title: [{ text: { content: sections.Title || 'Untitled' } }] },
+        URL: { url: content },
+        Title: { rich_text: [{ text: { content: sections.Title || '' } }] },
+        Summary: { rich_text: [{ text: { content: sections.Summary || '' } }] },
+        Facebook: {
+          rich_text: [{ text: { content: sections.Facebook?.Caption || '' } }],
+        },
+        LinkedIn: {
+          rich_text: [{ text: { content: sections.LinkedIn?.Caption || '' } }],
+        },
+        Threads: {
+          rich_text: [{ text: { content: sections.Threads?.Caption || '' } }],
+        },
+        YouTube: {
+          rich_text: [{ text: { content: sections.YouTube?.Description || '' } }],
+        },
+        Instagram: {
+          rich_text: [{ text: { content: sections.Instagram?.Caption || '' } }],
+        },
+        ReelScript: {
+          rich_text: [{ text: { content: sections['ReelScript'] || '' } }],
         },
       },
-    ],
-  });
+      children: [
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                type: 'text',
+                text: {
+                  content: JSON.stringify(sections, null, 2).slice(0, 2000), // Preview in block
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
 
-  return res.status(200).json({ message: 'Processed successfully' });
+    return res.status(200).json({
+      message: 'Processed successfully',
+      data: sections
+    });
+  } catch (error) {
+    console.error('Error:', error.response?.data || error.message);
+    return res.status(500).json({
+      error: error.response?.data || error.message
+    });
+  }
 }
