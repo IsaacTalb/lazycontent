@@ -147,7 +147,7 @@ export default function Home() {
             <h3 className="text-2xl font-bold">More Features Coming Soon!</h3>
           </div>
           <p className="text-blue-100 mb-6">
-            We're working on exciting new features including batch processing, 
+            We&apos;re working on exciting new features including batch processing, 
             advanced AI models, custom templates, and API access.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
