@@ -195,7 +195,7 @@ export default function Settings() {
               </button>
             </div> 
             <div className="text-sm text-gray-500">
-              1. Click &quot;Duplicate&quot; button below to create your own database
+              1. Click &quot;Duplicate&quot; button below to create your own database.
               <br />
               2. Copy the ID from your database URL (format: copy the ID code between notion.so/ and ?v look this example URL: https://www.notion.so/22cc9330d7311c80aa85eiroce68b8c45a07?v=)
             </div>
