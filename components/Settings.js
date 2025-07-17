@@ -99,7 +99,7 @@ export default function Settings() {
                 value={settings.geminiApiKey}
                 onChange={(e) => handleInputChange(e, 'geminiApiKey')}
                 className="w-full py-3 px-4 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-black"
-                placeholder="Enter your Gemini API key"
+                placeholder={`Enter your Gemini API key`}
               />
               <button
                 type="button"
@@ -183,9 +183,9 @@ export default function Settings() {
                 placeholder="Enter your Notion database ID"
               />
               <button
-                type="button"
+                type={"button"}
                 onClick={() => setShowPasswords(prev => ({ ...prev, notionDatabaseId: !prev.notionDatabaseId }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
+                className={"absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"}
               >
                 {showPasswords.notionDatabaseId ? (
                   <EyeOff className="w-5 h-5" />
@@ -195,24 +195,24 @@ export default function Settings() {
               </button>
             </div> 
             <div className="text-sm text-gray-500">
-              1. Click "Duplicate" button below to create your own database
+              1. Click &quot;Duplicate&quot; button below to create your own database
               <br />
-              2. Copy the ID from your database URL (format: copy the id code between notion.so/ and ?v look this example url: https://www.notion.so/22cc9330d7311c80aa85eiroce68b8c45a07?v=)
+              2. Copy the ID from your database URL (format: copy the ID code between notion.so/ and ?v look this example URL: https://www.notion.so/22cc9330d7311c80aa85eiroce68b8c45a07?v=)
             </div>
           </div>
         </div>
 
         <div className="mt-6">
           <div className="text-sm text-gray-500 mb-4">
-            Click "Duplicate" to create your own copy of the template database:
+            Click &quot;Duplicate&quot; to create your own copy of the template database:
           </div>
           <div className="aspect-video rounded-lg overflow-hidden">
             <iframe
-              src="https://bronzed-runner-8f0.notion.site/ebd/22ccd8d7311c80aa85ece68be8c45a07?v=22ccd8d7311c8008ae0e000c23d7d907"
-              width="100%"
-              height="600"
-              frameborder="0"
-              allowfullscreen
+              src={"https://bronzed-runner-8f0.notion.site/ebd/22ccd8d7311c80aa85ece68be8c45a07?v=22ccd8d7311c8008ae0e000c23d7d907"}
+              width={"100%"}
+              height={"600"}
+              frameBorder={"0"}
+              allowFullScreen
             />
           </div>
         </div>
