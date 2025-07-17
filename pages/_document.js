@@ -5,7 +5,6 @@ export default function Document() {
     <Html lang="en">
       <Head>
         {/* Primary Meta Tags */}
-        <title>LazyContent - Duck Cloud</title>
         <meta name="title" content="LazyContent - Duck Cloud" />
         <meta name="description" content="Generate social media content from blog posts and speech using AI with integration to Notion database." />
         <meta name="keywords" content="AI content generation, social media content, blog post to social media, speech to text, Notion integration" />

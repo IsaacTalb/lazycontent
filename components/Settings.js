@@ -144,12 +144,12 @@ export default function Settings() {
                 value={settings.notionToken}
                 onChange={(e) => handleInputChange(e, 'notionToken')}
                 className="w-full py-3 px-4 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-black"
-                placeholder="Enter your Notion integration token"
+                placeholder={"Enter your Notion integration token"}
               />
               <button
-                type="button"
+                type={"button"}
                 onClick={() => setShowPasswords(prev => ({ ...prev, notionToken: !prev.notionToken }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
+                className={"absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"}
               >
                 {showPasswords.notionToken ? (
                   <EyeOff className="w-5 h-5" />
@@ -161,9 +161,9 @@ export default function Settings() {
             <div className="text-sm text-gray-500">
               1. Go to Notion → Settings & Members → Integrations
               <br />
-              2. Click "New Integration"
+              2. Click &quot;New Integration&quot;
               <br />
-              3. Copy the "Internal Integration Token"
+              3. Copy the &quot;Internal Integration Token&quot;
             </div>
           </div>
         </div>
