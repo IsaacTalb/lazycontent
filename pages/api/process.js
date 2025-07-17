@@ -1,9 +1,6 @@
 import axios from 'axios';
 import { Client } from '@notionhq/client';
 
-// Get environment variables
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Only POST allowed');
 
@@ -11,20 +8,27 @@ export default async function handler(req, res) {
     content,
     notionToken, 
     notionDatabaseId,
+    geminiApiKey,
     geminiModel = 'gemini-2.0-flash' // Default model
   } = req.body;
 
-  const geminiApiKey = process.env.GEMINI_API_KEY;
+  if (!geminiApiKey) {
+    return res.status(400).json({ error: 'Gemini API key is required' });
+  }
 
   // Initialize Notion client
   const notionClient = new Client({ auth: notionToken });
 
-  // If content is a URL, fetch it first
+  // Get content - either from URL or direct transcription
   let blogText = content;
   try {
     if (content.startsWith('http')) {
+      // If it's a URL, fetch the content
       const response = await fetch(content);
       blogText = await response.text();
+    } else {
+      // If it's transcription, use it directly
+      blogText = content;
     }
   } catch (error) {
     console.error('Error fetching content:', error);
@@ -79,17 +83,18 @@ ${blogText}
 `;
 
   try {
-    console.log('Making Gemini API request with API key:', GEMINI_API_KEY.substring(0, 10) + '...');
+    console.log('Making Gemini API request with API key:', geminiApiKey.substring(0, 10) + '...');
     console.log('Using model:', geminiModel);
     
     const geminiResponse = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`,
       {
         contents: [{ parts: [{ text: geminiPrompt }] }]
       },
       {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-goog-api-key': geminiApiKey
         }
       }
     );
@@ -98,47 +103,206 @@ ${blogText}
     
     // Extract the response content from Gemini
     const responseContent = geminiResponse.data.candidates[0].content.parts[0].text;
-    
-    // Try to parse the JSON response
-    const sections = JSON.parse(responseContent.replace(/```json|```/g, '').trim());
+
+    // Parse the JSON response
+    let processedContent;
+    try {
+      processedContent = JSON.parse(responseContent);
+    } catch (err) {
+      console.error('Error parsing Gemini response:', err);
+      return res.status(500).json({ error: 'Failed to parse AI response' });
+    }
     
     // Create Notion page
-    await notionClient.pages.create({
-      parent: { database_id: notionDatabaseId },
+    const notionPage = await notionClient.pages.create({
+      parent: {
+        database_id: notionDatabaseId,
+      },
       properties: {
-        Name: { title: [{ text: { content: sections.Title || 'Untitled' } }] },
-        URL: { url: content },
-        Title: { rich_text: [{ text: { content: sections.Title || '' } }] },
-        Summary: { rich_text: [{ text: { content: sections.Summary || '' } }] },
-        Facebook: {
-          rich_text: [{ text: { content: sections.Facebook?.Caption || '' } }],
+        Title: {
+          title: [
+            {
+              text: {
+                content: processedContent.Title || 'Untitled',
+              },
+            },
+          ],
         },
-        LinkedIn: {
-          rich_text: [{ text: { content: sections.LinkedIn?.Caption || '' } }],
-        },
-        Threads: {
-          rich_text: [{ text: { content: sections.Threads?.Caption || '' } }],
-        },
-        YouTube: {
-          rich_text: [{ text: { content: sections.YouTube?.Description || '' } }],
-        },
-        Instagram: {
-          rich_text: [{ text: { content: sections.Instagram?.Caption || '' } }],
-        },
-        ReelScript: {
-          rich_text: [{ text: { content: sections['ReelScript'] || '' } }],
+        'Original Content': {
+          rich_text: [
+            {
+              text: {
+                content: blogText,
+              },
+            },
+          ],
         },
       },
       children: [
+        {
+          object: 'block',
+          type: 'heading_2',
+          heading_2: {
+            rich_text: [
+              {
+                text: {
+                  content: 'Summary',
+                },
+              },
+            ],
+          },
+        },
         {
           object: 'block',
           type: 'paragraph',
           paragraph: {
             rich_text: [
               {
-                type: 'text',
                 text: {
-                  content: JSON.stringify(sections, null, 2).slice(0, 2000), // Preview in block
+                  content: processedContent.Summary || 'No summary available',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'heading_2',
+          heading_2: {
+            rich_text: [
+              {
+                text: {
+                  content: 'Social Media Content',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'heading_3',
+          heading_3: {
+            rich_text: [
+              {
+                text: {
+                  content: 'Facebook',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                text: {
+                  content: processedContent.Facebook.Caption || 'No caption available',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'heading_3',
+          heading_3: {
+            rich_text: [
+              {
+                text: {
+                  content: 'LinkedIn',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                text: {
+                  content: processedContent.LinkedIn.Caption || 'No caption available',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'heading_3',
+          heading_3: {
+            rich_text: [
+              {
+                text: {
+                  content: 'Threads',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                text: {
+                  content: processedContent.Threads.Caption || 'No caption available',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'heading_3',
+          heading_3: {
+            rich_text: [
+              {
+                text: {
+                  content: 'YouTube',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                text: {
+                  content: processedContent.YouTube.Description || 'No description available',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'heading_3',
+          heading_3: {
+            rich_text: [
+              {
+                text: {
+                  content: 'Instagram',
+                },
+              },
+            ],
+          },
+        },
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                text: {
+                  content: processedContent.Instagram.Caption || 'No caption available',
                 },
               },
             ],

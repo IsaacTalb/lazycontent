@@ -1,137 +1,202 @@
-import { useState, useRef } from 'react';
-import { Mic, Pause, Play } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Mic, Pause, Play, Loader2, Save, RotateCw, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+import mime from 'mime';
 
 export default function SpeechToText({ onTranscription }) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [transcription, setTranscription] = useState('');
-  const recognition = useRef(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const streamRef = useRef(null);
 
-  const startRecording = () => {
-    if (!recognition.current) {
-      // Use webkitSpeechRecognition if available, otherwise fall back to SpeechRecognition
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-      if (!SpeechRecognition) {
-        alert('Speech recognition is not supported in this browser');
-        return;
-      }
-
-      recognition.current = new SpeechRecognition();
-      recognition.current.continuous = true;
-      recognition.current.interimResults = true;
-      recognition.current.lang = 'en-US';
-
-      recognition.current.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join('');
-        setTranscription(transcript);
-      };
-
-      recognition.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setIsRecording(false);
-      };
-
-      recognition.current.onend = () => {
-        setIsRecording(false);
-      };
-    }
-
-    recognition.current.start();
-    setIsRecording(true);
+  const handleSave = () => {
+    if (!transcription) return;
+    
+    onTranscription({
+      content: transcription,
+      geminiApiKey: localStorage.getItem('geminiApiKey')
+    });
+    setIsSaved(true);
+    setError('');
   };
 
-  const stopRecording = () => {
-    if (recognition.current) {
-      recognition.current.stop();
-      setIsRecording(false);
-    }
+  const handleClear = () => {
+    setTranscription('');
+    setIsSaved(false);
+    setError('');
   };
 
-  const handleProcess = async () => {
-    if (!transcription) {
-      alert('Please record some speech first!');
-      return;
-    }
+  const handleAudio = async (audioBlob) => {
+    if (!audioBlob) return;
+    setIsRecording(false);
+    setIsProcessing(true);
+    setError('');
 
     const geminiApiKey = localStorage.getItem('geminiApiKey');
-    const notionToken = localStorage.getItem('notionToken');
-    const notionDatabaseId = localStorage.getItem('notionDatabaseId');
-    if (!geminiApiKey || !notionToken || !notionDatabaseId) {
-      alert('Please configure your API keys in the Settings first!');
+    if (!geminiApiKey) {
+      setError('Please configure your Gemini API key in the Settings first!');
+      setIsProcessing(false);
       return;
     }
 
     try {
-      const response = await fetch('/api/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: transcription,
-          geminiApiKey,
-          notionToken,
-          notionDatabaseId
-        }),
+      const audioBase64 = Buffer.from(await audioBlob.arrayBuffer()).toString('base64');
+      const mimeType = audioBlob.type || 'audio/wav';
+
+      const response = await axios.post('/api/live-transcribe', {
+        audio: {
+          inlineData: {
+            data: audioBase64,
+            mimeType
+          }
+        },
+        geminiApiKey
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to process content');
-      }
-
-      const data = await response.json();
-      
-      // Clear transcription after successful processing
-      setTranscription('');
-      alert('Content processed successfully!');
-      onTranscription(transcription);
-    } catch (error) {
-      console.error('Error processing content:', error);
-      alert('Failed to process content. Please try again.');
+      setTranscription(response.data.transcription);
+      setIsProcessing(false);
+      setIsSaved(false);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to transcribe audio');
+      setIsProcessing(false);
     }
   };
 
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      const audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        handleAudio(audioBlob);
+        audioChunks.length = 0;
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+
+      return () => {
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.stop();
+          mediaRecorderRef.current = null;
+        }
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+      };
+    } catch (err) {
+      setError('Failed to start recording: ' + err.message);
+      setIsRecording(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isRecording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    }
+  }, [isRecording]);
+
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200/50 p-8 mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-2xl font-bold text-gray-900">Speech to Text</h3>
-        <div className="flex space-x-4">
+    <div className="space-y-6">
+      <div className="flex justify-center items-center">
+        {isRecording ? (
           <button
-            onClick={isRecording ? stopRecording : startRecording}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 flex items-center space-x-2"
+            onClick={() => {
+              setIsRecording(false);
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center space-x-2"
+            disabled={isProcessing}
           >
-            {isRecording ? (
-              <>
-                <Pause className="w-4 h-4" />
-                <span>Stop Recording</span>
-              </>
-            ) : (
-              <>
-                <Mic className="w-4 h-4" />
-                <span>Start Recording</span>
-              </>
-            )}
+            <Pause className="w-5 h-5" />
+            <span>Stop Recording</span>
           </button>
+        ) : (
           <button
-            onClick={handleProcess}
-            disabled={!transcription || isProcessing}
-            className={`bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 flex items-center space-x-2 ${
-              !transcription || isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            onClick={handleStartRecording}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center space-x-2"
+            disabled={isProcessing || isSaved}
           >
-            <Play className="w-4 h-4" />
-            <span>Process Content</span>
+            <Mic className="w-5 h-5" />
+            <span>Start Recording</span>
           </button>
+        )}
+      </div>
+
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
         </div>
-      </div>
-      <div className="mt-4">
-        <textarea
-          value={transcription}
-          onChange={(e) => setTranscription(e.target.value)}
-          placeholder="Your transcription will appear here..."
-          className="w-full h-32 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-        />
-      </div>
+      )}
+
+      {isProcessing && (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span className="ml-2">Processing transcription...</span>
+        </div>
+      )}
+
+      {transcription && !isProcessing && (
+        <div className="mt-6">
+          <div className="space-y-4">
+            <div className="relative">
+              <textarea
+                value={transcription}
+                rows={4}
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-black placeholder-gray-500"
+                placeholder="Your transcription will appear here..."
+                readOnly
+              />
+              <div className="absolute bottom-2 right-2 text-sm text-gray-500">
+                {transcription.length} characters
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleClear}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                disabled={isProcessing || !transcription}
+              >
+                <RotateCw className="w-4 h-4" />
+                <span>Clear</span>
+              </button>
+
+              <button
+                onClick={handleSave}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                disabled={isProcessing || !transcription || isSaved}
+              >
+                <Save className="w-4 h-4" />
+                <span>Save</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
