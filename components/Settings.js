@@ -159,13 +159,10 @@ export default function Settings() {
               </button>
             </div>
             <div className="text-sm text-gray-500">
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
               1. Go to Notion → Settings & Members → Integrations
               <br />
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
               2. Click &quot;New Integration&quot;
               <br />
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
               3. Copy the &quot;Internal Integration Token&quot;
             </div>
           </div>
@@ -198,10 +195,8 @@ export default function Settings() {
               </button>
             </div> 
             <div className="text-sm text-gray-500">
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
               1. Click &quot;Duplicate&quot; button below to create your own database
               <br />
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
               2. Copy the ID from your database URL (format: copy the ID code between notion.so/ and ?v look this example URL: https://www.notion.so/22cc9330d7311c80aa85eiroce68b8c45a07?v=)
             </div>
           </div>
@@ -209,7 +204,6 @@ export default function Settings() {
 
         <div className="mt-6">
           <div className="text-sm text-gray-500 mb-4">
-            {/* eslint-disable-next-line react/no-unescaped-entities */}
             Click &quot;Duplicate&quot; to create your own copy of the template database:
           </div>
           <div className="aspect-video rounded-lg overflow-hidden">
