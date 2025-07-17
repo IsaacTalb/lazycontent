@@ -9,10 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/genai": "^1.10.0",
     "@notionhq/client": "^4.0.0",
     "axios": "^1.10.0",
     "dotenv": "^17.2.0",
     "lucide-react": "^0.525.0",
+    "mime": "^4.0.7",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
