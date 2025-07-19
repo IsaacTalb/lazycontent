@@ -4,35 +4,31 @@ import { Client } from '@notionhq/client';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Only POST allowed');
 
-  const { 
+  const {
     content,
-    notionToken, 
+    notionToken,
     notionDatabaseId,
     geminiApiKey,
-    geminiModel = 'gemini-2.0-flash' // Default model
+    geminiModel = 'gemini-2.0-flash' // default model
   } = req.body;
 
-  if (!geminiApiKey) {
-    return res.status(400).json({ error: 'Gemini API key is required' });
+  if (!notionToken || !notionDatabaseId || !geminiApiKey || !content) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // Initialize Notion client
+  // Initialize Notion client with user token
   const notionClient = new Client({ auth: notionToken });
 
-  // Get content - either from URL or direct transcription
+  // If content is a URL, fetch it
   let blogText = content;
   try {
     if (content.startsWith('http')) {
-      // If it's a URL, fetch the content
       const response = await fetch(content);
       blogText = await response.text();
-    } else {
-      // If it's transcription, use it directly
-      blogText = content;
     }
   } catch (error) {
-    console.error('Error fetching content:', error);
-    return res.status(500).json({ error: 'Failed to fetch content' });
+    console.error('Error fetching URL content:', error);
+    return res.status(500).json({ error: 'Failed to fetch content from URL' });
   }
 
   const geminiPrompt = `
@@ -76,233 +72,65 @@ Respond in this JSON format:
     "Hashtags": "..."
   },
   "ReelScript": "..."
-  ...
 }
 
 ${blogText}
 `;
 
   try {
-    console.log('Making Gemini API request with API key:', geminiApiKey.substring(0, 10) + '...');
-    console.log('Using model:', geminiModel);
-    
+    console.log(`Calling Gemini with model: ${geminiModel}`);
+
     const geminiResponse = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`,
       {
         contents: [{ parts: [{ text: geminiPrompt }] }]
       },
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': geminiApiKey
-        }
+        headers: { 'Content-Type': 'application/json' }
       }
     );
-    
-    console.log('Gemini API Response:', geminiResponse.data);
-    
-    // Extract the response content from Gemini
-    const responseContent = geminiResponse.data.candidates[0].content.parts[0].text;
 
-    // Parse the JSON response
-    let processedContent;
-    try {
-      processedContent = JSON.parse(responseContent);
-    } catch (err) {
-      console.error('Error parsing Gemini response:', err);
-      return res.status(500).json({ error: 'Failed to parse AI response' });
-    }
-    
-    // Create Notion page
-    const notionPage = await notionClient.pages.create({
-      parent: {
-        database_id: notionDatabaseId,
-      },
+    const responseContent = geminiResponse.data.candidates[0]?.content?.parts[0]?.text;
+
+    const sections = JSON.parse(responseContent.replace(/```json|```/g, '').trim());
+
+    // Create page in Notion
+    await notionClient.pages.create({
+      parent: { database_id: notionDatabaseId },
       properties: {
-        Title: {
-          title: [
-            {
-              text: {
-                content: processedContent.Title || 'Untitled',
-              },
-            },
-          ],
+        Name: { title: [{ text: { content: sections.Title || 'Untitled' } }] },
+        URL: { url: content },
+        Title: { rich_text: [{ text: { content: sections.Title || '' } }] },
+        Summary: { rich_text: [{ text: { content: sections.Summary || '' } }] },
+        Facebook: {
+          rich_text: [{ text: { content: sections.Facebook?.Caption || '' } }],
         },
-        'Original Content': {
-          rich_text: [
-            {
-              text: {
-                content: blogText,
-              },
-            },
-          ],
+        LinkedIn: {
+          rich_text: [{ text: { content: sections.LinkedIn?.Caption || '' } }],
+        },
+        Threads: {
+          rich_text: [{ text: { content: sections.Threads?.Caption || '' } }],
+        },
+        YouTube: {
+          rich_text: [{ text: { content: sections.YouTube?.Description || '' } }],
+        },
+        Instagram: {
+          rich_text: [{ text: { content: sections.Instagram?.Caption || '' } }],
+        },
+        ReelScript: {
+          rich_text: [{ text: { content: sections.ReelScript || '' } }],
         },
       },
       children: [
         {
           object: 'block',
-          type: 'heading_2',
-          heading_2: {
-            rich_text: [
-              {
-                text: {
-                  content: 'Summary',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
           type: 'paragraph',
           paragraph: {
             rich_text: [
               {
+                type: 'text',
                 text: {
-                  content: processedContent.Summary || 'No summary available',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'heading_2',
-          heading_2: {
-            rich_text: [
-              {
-                text: {
-                  content: 'Social Media Content',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'heading_3',
-          heading_3: {
-            rich_text: [
-              {
-                text: {
-                  content: 'Facebook',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                text: {
-                  content: processedContent.Facebook.Caption || 'No caption available',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'heading_3',
-          heading_3: {
-            rich_text: [
-              {
-                text: {
-                  content: 'LinkedIn',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                text: {
-                  content: processedContent.LinkedIn.Caption || 'No caption available',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'heading_3',
-          heading_3: {
-            rich_text: [
-              {
-                text: {
-                  content: 'Threads',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                text: {
-                  content: processedContent.Threads.Caption || 'No caption available',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'heading_3',
-          heading_3: {
-            rich_text: [
-              {
-                text: {
-                  content: 'YouTube',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                text: {
-                  content: processedContent.YouTube.Description || 'No description available',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'heading_3',
-          heading_3: {
-            rich_text: [
-              {
-                text: {
-                  content: 'Instagram',
-                },
-              },
-            ],
-          },
-        },
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                text: {
-                  content: processedContent.Instagram.Caption || 'No caption available',
+                  content: JSON.stringify(sections, null, 2).slice(0, 2000), // Preview block
                 },
               },
             ],
@@ -312,11 +140,11 @@ ${blogText}
     });
 
     return res.status(200).json({
-      message: 'Processed successfully',
+      message: 'Processed and added to Notion successfully.',
       data: sections
     });
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
+    console.error('Processing error:', error.response?.data || error.message);
     return res.status(500).json({
       error: error.response?.data || error.message
     });
