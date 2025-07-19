@@ -1,5 +1,6 @@
 // contact.js
 import Link from 'next/link';
+import Image from 'next/image';
 import { Cloud, Sparkles, Mail, MessageCircle, Phone, MapPin, Send } from 'lucide-react';
 
 export default function Contact() {
@@ -55,7 +56,7 @@ export default function Contact() {
             Get in Touch
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Have questions about LazyContent? Need help getting started? We'd love to hear from you!
+            Have questions about LazyContent? Need help getting started? We&apos;d love to hear from you!
             Our team is here to help you streamline your content creation process.
           </p>
         </div>
@@ -94,7 +95,7 @@ export default function Contact() {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/50 p-8 mb-12">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Send us a Message</h2>
-            <p className="text-gray-600">Fill out the form below and we'll get back to you within 24 hours.</p>
+            <p className="text-gray-600">Fill out the form below and we&apos;ll get back to you within 24 hours.</p>
           </div>
           
           <iframe
@@ -116,12 +117,12 @@ export default function Contact() {
             
             <div className="border-b border-gray-200 pb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Which platforms are supported?</h3>
-              <p className="text-gray-600">We support Facebook, LinkedIn, Threads (X), YouTube, Instagram, and we're constantly adding more platforms based on user feedback.</p>
+              <p className="text-gray-600">We support Facebook, LinkedIn, Threads (X), YouTube, Instagram, and we&apos;re constantly adding more platforms based on user feedback.</p>
             </div>
             
             <div className="border-b border-gray-200 pb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Do I need a Notion account?</h3>
-              <p className="text-gray-600">Yes, you'll need a Notion account to save your generated content. We automatically organize everything in your Notion database for easy access and management.</p>
+              <p className="text-gray-600">Yes, you&apos;ll need a Notion account to save your generated content. We automatically organize everything in your Notion database for easy access and management.</p>
             </div>
             
             <div>
@@ -134,8 +135,8 @@ export default function Contact() {
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white text-center">
           <h3 className="text-3xl font-bold mb-4">Ready to Start Creating?</h3>
-          <p className="text-blue-100 mb-6 text-lg">
-            Don't let content creation slow you down. Try LazyContent today and see the difference AI can make.
+            <p className="text-blue-100 mb-6 text-lg">
+            Don&apos;t let content creation slow you down. Try LazyContent today and see the difference AI can make.
           </p>
           <Link href="/">
             <button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-xl transition-all duration-200 flex items-center space-x-2 mx-auto">
@@ -151,7 +152,7 @@ export default function Contact() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <span className="inline-flex items-center justify-center bg-white rounded-lg shadow-md w-8 h-8 mr-2">
-              <img src="/dklogo.jpg" alt="DuckCloud Logo" className="w-6 h-6 object-contain" />
+              <Image src="/dklogo.jpg" alt="DuckCloud Logo" width={24} height={24} className="object-contain" />
             </span>
             <span className="font-semibold">DuckCloud</span>
           </div>

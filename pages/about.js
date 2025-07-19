@@ -1,5 +1,6 @@
 // about.js
 import Link from 'next/link';
+import Image from 'next/image';
 import { Cloud, Globe, Sparkles, Users, Zap, Database, Clock, ArrowRight } from 'lucide-react';
 
 export default function About() {
@@ -12,7 +13,7 @@ export default function About() {
             <Link href="/">
               <div className="flex items-center space-x-3 cursor-pointer">
                 <div className="rounded-lg bg-white shadow-md flex items-center justify-center w-10 h-10 overflow-hidden">
-                  <img src="/dklogo.jpg" alt="LazyContent Logo" className="w-full h-full object-cover" />
+                  <Image src="/dklogo.jpg" alt="LazyContent Logo" width={40} height={40} className="object-cover" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -49,7 +50,7 @@ export default function About() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="bg-white shadow-md w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 overflow-hidden">
-            <img src="/dklogo.jpg" alt="LazyContent Logo" className="w-full h-full object-cover" />
+            <Image src="/dklogo.jpg" alt="LazyContent Logo" width={80} height={80} className="object-cover" />
           </div>
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
             About LazyContent
@@ -79,7 +80,7 @@ export default function About() {
               <Zap className="w-6 h-6 text-blue-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">AI-Powered</h3>
-            <p className="text-gray-600">Advanced Google Gemini AI generates contextually relevant content for each platform's unique requirements.</p>
+            <p className="text-gray-600">Advanced Google Gemini AI generates contextually relevant content for each platform&apos;s unique requirements.</p>
           </div>
 
           <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-300">
@@ -143,7 +144,7 @@ export default function About() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <span className="inline-flex items-center justify-center bg-white rounded-lg shadow-md w-8 h-8 mr-2">
-              <img src="/dklogo.jpg" alt="DuckCloud Logo" className="w-6 h-6 object-contain" />
+              <Image src="/dklogo.jpg" alt="DuckCloud Logo" width={24} height={24} className="object-contain" />
             </span>
             <span className="font-semibold">DuckCloud</span>
             
