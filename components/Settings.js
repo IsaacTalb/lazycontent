@@ -114,7 +114,7 @@ export default function Settings() {
               </button>
             </div>
             <div className="text-sm text-gray-500">
-              Try different Gemini models if one doesn't work:
+              Try different Gemini models if one doesn&apos;t work:
               <ul className="list-disc list-inside">
                 <li>gemini-2.0</li>
                 <li>gemini-2.0-flash</li>
