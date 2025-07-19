@@ -1,25 +1,25 @@
 import axios from 'axios';
 import { Client } from '@notionhq/client';
 
-// Get environment variables
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Only POST allowed');
 
-  const { 
+  const {
     content,
-    notionToken, 
+    notionToken,
     notionDatabaseId,
-    geminiModel = 'gemini-2.0-flash' // Default model
+    geminiApiKey,
+    geminiModel = 'gemini-2.0-flash' // default model
   } = req.body;
 
-  const geminiApiKey = process.env.GEMINI_API_KEY;
+  if (!notionToken || !notionDatabaseId || !geminiApiKey || !content) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
 
-  // Initialize Notion client
+  // Initialize Notion client with user token
   const notionClient = new Client({ auth: notionToken });
 
-  // If content is a URL, fetch it first
+  // If content is a URL, fetch it
   let blogText = content;
   try {
     if (content.startsWith('http')) {
@@ -27,8 +27,8 @@ export default async function handler(req, res) {
       blogText = await response.text();
     }
   } catch (error) {
-    console.error('Error fetching content:', error);
-    return res.status(500).json({ error: 'Failed to fetch content' });
+    console.error('Error fetching URL content:', error);
+    return res.status(500).json({ error: 'Failed to fetch content from URL' });
   }
 
   const geminiPrompt = `
@@ -72,37 +72,29 @@ Respond in this JSON format:
     "Hashtags": "..."
   },
   "ReelScript": "..."
-  ...
 }
 
 ${blogText}
 `;
 
   try {
-    console.log('Making Gemini API request with API key:', GEMINI_API_KEY.substring(0, 10) + '...');
-    console.log('Using model:', geminiModel);
-    
+    console.log(`Calling Gemini with model: ${geminiModel}`);
+
     const geminiResponse = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`,
       {
         contents: [{ parts: [{ text: geminiPrompt }] }]
       },
       {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       }
     );
-    
-    console.log('Gemini API Response:', geminiResponse.data);
-    
-    // Extract the response content from Gemini
-    const responseContent = geminiResponse.data.candidates[0].content.parts[0].text;
-    
-    // Try to parse the JSON response
+
+    const responseContent = geminiResponse.data.candidates[0]?.content?.parts[0]?.text;
+
     const sections = JSON.parse(responseContent.replace(/```json|```/g, '').trim());
-    
-    // Create Notion page
+
+    // Create page in Notion
     await notionClient.pages.create({
       parent: { database_id: notionDatabaseId },
       properties: {
@@ -126,7 +118,7 @@ ${blogText}
           rich_text: [{ text: { content: sections.Instagram?.Caption || '' } }],
         },
         ReelScript: {
-          rich_text: [{ text: { content: sections['ReelScript'] || '' } }],
+          rich_text: [{ text: { content: sections.ReelScript || '' } }],
         },
       },
       children: [
@@ -138,7 +130,7 @@ ${blogText}
               {
                 type: 'text',
                 text: {
-                  content: JSON.stringify(sections, null, 2).slice(0, 2000), // Preview in block
+                  content: JSON.stringify(sections, null, 2).slice(0, 2000), // Preview block
                 },
               },
             ],
@@ -148,11 +140,11 @@ ${blogText}
     });
 
     return res.status(200).json({
-      message: 'Processed successfully',
+      message: 'Processed and added to Notion successfully.',
       data: sections
     });
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
+    console.error('Processing error:', error.response?.data || error.message);
     return res.status(500).json({
       error: error.response?.data || error.message
     });

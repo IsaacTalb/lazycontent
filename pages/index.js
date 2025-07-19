@@ -6,6 +6,10 @@ import Link from 'next/link';
 
 export default function Home() {
   const [url, setUrl] = useState('');
+
+  const handleTranscription = (transcription) => {
+    setUrl(transcription);
+  };
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [transcription, setTranscription] = useState('');
@@ -15,12 +19,15 @@ export default function Home() {
     setLoading(true);
     setMsg('');
 
+    const content = typeof url === 'string' ? url : url.content;
+    const geminiApiKey = typeof url === 'string' ? localStorage.getItem('geminiApiKey') : url.geminiApiKey;
+
     const res = await fetch('/api/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        content: url,
-        geminiApiKey: localStorage.getItem('geminiApiKey'),
+        content,
+        geminiApiKey,
         notionToken: localStorage.getItem('notionToken'),
         notionDatabaseId: localStorage.getItem('notionDatabaseId')
       }),
@@ -82,7 +89,7 @@ export default function Home() {
         <Settings />
 
         {/* Speech to Text */}
-        <SpeechToText onTranscription={setTranscription} />
+        {/* <SpeechToText onTranscription={handleTranscription} /> */}
 
         {/* Main Form Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/50 p-8 mb-8">
@@ -108,7 +115,7 @@ export default function Home() {
               </div>
 
               {/* Speech to Text Button */}
-              <div className="flex justify-center mt-4">
+              {/* <div className="flex justify-center mt-4">
                 <button
                   type="button"
                   onClick={() => setUrl(transcription)}
@@ -118,7 +125,7 @@ export default function Home() {
                   <Globe className="w-4 h-4" />
                   <span>Use Transcription</span>
                 </button>
-              </div>
+              </div> */}
 
               <button
                 type="submit"

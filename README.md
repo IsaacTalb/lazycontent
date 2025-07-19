@@ -34,17 +34,15 @@ cd lazycontent
 npm install # or yarn install
 ```
 
-### 3. Configure Environment Variables
+### 3. Configure Settings
 
-Create a `.env.local` file at the root of your project:
+No need to configure environment variables! Simply visit [https://lazycontent.duckcloud.info](https://lazycontent.duckcloud.info) and use the Settings page to:
 
-```
-GEMINI_API_KEY=your_gemini_api_key
-NOTION_DATABASE_ID=your_notion_database_id
-NOTION_TOKEN=your_notion_integration_token
-```
+1. Add your Gemini API key (Get from [Google Maker Suite](https://makersuite.google.com/app/apikey))
+2. Add your Notion Integration Token (Get from [Notion Integrations](https://www.notion.so/my-integrations))
+3. Add your Notion Database ID (Create your database by duplicating the template in the Settings page)
 
-💡 You must share access of the Notion database with your integration token from Notion Developers.
+💡 Make sure to share access of your Notion database with your integration token from Notion Developers.
 
 ### 4. Run the Development Server
 
