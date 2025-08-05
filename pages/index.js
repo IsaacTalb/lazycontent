@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { Cloud, Globe, ArrowRight, Clock, Sparkles } from 'lucide-react';
 import Settings from '../components/Settings';
 import SpeechToText from '../components/SpeechToText';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   const [url, setUrl] = useState('');
-
-  const handleTranscription = (transcription) => {
-    setUrl(transcription);
-  };
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [transcription, setTranscription] = useState('');
@@ -18,15 +16,12 @@ export default function Home() {
     setLoading(true);
     setMsg('');
 
-    const content = typeof url === 'string' ? url : url.content;
-    const geminiApiKey = typeof url === 'string' ? localStorage.getItem('geminiApiKey') : url.geminiApiKey;
-
     const res = await fetch('/api/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        content,
-        geminiApiKey,
+        content: url,
+        geminiApiKey: localStorage.getItem('geminiApiKey'),
         notionToken: localStorage.getItem('notionToken'),
         notionDatabaseId: localStorage.getItem('notionDatabaseId')
       }),
@@ -41,26 +36,53 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                <Cloud className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  LazyContent
-                </h1>
-                <p className="text-sm text-gray-600">by DuckCloud</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Sparkles className="w-4 h-4" />
-              <span>v2.0 - More features coming soon!</span>
-            </div>
-          </div>
+  <div className="max-w-6xl mx-auto px-4 py-4">
+    <div className="flex items-center justify-between">
+      {/* Logo Section */}
+      <div className="flex items-center space-x-3">
+        <div className="rounded-lg bg-white shadow-md flex items-center justify-center w-10 h-10 overflow-hidden">
+                                             
+            <Image
+              src="/dklogo.jpg"
+              alt="LazyContent Logo"
+              width={200}
+              height={200}
+              className="w-full h-full object-cover"
+            />
         </div>
-      </header>
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            LazyContent
+          </h1>
+          <p className="text-sm text-gray-600">by DuckCloud</p>
+        </div>
+      </div>
+
+      {/* Navigation - Centered */}
+      <nav className="flex items-center space-x-4">
+        <Link href="/about">
+          <button className="px-4 py-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200">
+            About
+          </button>
+        </Link>
+        <Link href="/contact">
+          <button className="px-4 py-2 border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white rounded-lg transition-all duration-200">
+            Contact
+          </button>
+        </Link>
+      </nav>
+
+      {/* Version Info */}
+      <div className="flex items-center space-x-2 text-sm text-gray-600">
+        <Sparkles className="w-4 h-4" />
+        <span>v2.0 - More features coming soon!</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+      {/* Navigation */}
+      
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-12">
@@ -68,7 +90,7 @@ export default function Home() {
         <Settings />
 
         {/* Speech to Text */}
-        {/* <SpeechToText onTranscription={handleTranscription} /> */}
+        {/* <SpeechToText onTranscription={setTranscription} /> */}
 
         {/* Main Form Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/50 p-8 mb-8">
@@ -166,18 +188,28 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 mt-16">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Cloud className="w-5 h-5 text-blue-400" />
-            <span className="font-semibold">DuckCloud</span>
+       {/* Footer */}
+            <footer className="bg-gray-900 text-white py-8 mt-16">
+              <div className="max-w-4xl mx-auto px-4 text-center">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <span className="inline-flex items-center justify-center bg-white rounded-lg shadow-md w-8 h-8 mr-2">
+                    
+      <Image
+        src="/dklogo.jpg"
+        alt="LazyContent Logo"
+        width={200}
+        height={200}
+        className="w-full h-full object-cover"
+      />
+                  </span>
+                  <span className="font-semibold">DuckCloud</span>
+                  
+                </div>
+                <p className="text-gray-400">
+                  Building the future of content processing, one URL at a time.
+                </p>
+              </div>
+            </footer>
           </div>
-          <p className="text-gray-400">
-            Building the future of content processing, one URL at a time.
-          </p>
-        </div>
-      </footer>
-    </div>
-  );
-}
+        );
+      }
